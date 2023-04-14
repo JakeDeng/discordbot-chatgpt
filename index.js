@@ -29,7 +29,7 @@ client.on('messageCreate', async (message) => {
             message.reply("=== End Current Conversation ===");
             return;
         }
-        
+        console.log("Start Conversation");
         //record conversations
         let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."}];
 
@@ -61,7 +61,9 @@ client.on('messageCreate', async (message) => {
             messages: conversationLog,
             temperature: 0.6
         })
-        message.reply(result.data.choices[0].message)
+        
+        message.reply(result.data.choices[0].message);
+        console.log("Reply Sent");
         return;
     } catch(err){
         console.log(err)
