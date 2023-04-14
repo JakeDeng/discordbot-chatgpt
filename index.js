@@ -34,8 +34,8 @@ client.on('messageCreate', async (message) => {
         let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."}];
 
         await message.channel.sendTyping();
-        //fetch last 15 messages
-        let prevMessages = await message.channel.messages.fetch({limit: 15});
+        //fetch last 30 messages
+        let prevMessages = await message.channel.messages.fetch({limit: 30});
         let endKey = prevMessages.findKey((msg) => {
             return msg.content.startsWith('%end');
         });
