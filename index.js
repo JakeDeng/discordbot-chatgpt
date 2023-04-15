@@ -1,8 +1,8 @@
-const {Client, GatewayIntentBits} = require('discord.js');
+const {Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 const { Configuration, OpenAIApi} = require('openai');
 //setup openai
 const configuration = new Configuration({
-    //organization: process.env.OPENAI_ORG,
+    organization: process.env.OPENAI_ORG,
     apiKey: process.env.OPENAI_API_KEY
 });
 const openai = new OpenAIApi(configuration);
@@ -24,6 +24,7 @@ client.on('messageCreate', async (message) => {
     try{
         if(message.author.bot) return;
         if(message.content.startsWith('!')) return;//normal message
+        if(!(message.channel.name.startsWith('bot') || !isPublicChannel(message.channel))) return;//only reply in bot chat or private chat
         if(message.content.startsWith('%end')){
             console.log("End Conversation");
             message.reply("=== End Current Conversation ===");
@@ -46,7 +47,7 @@ client.on('messageCreate', async (message) => {
         filteredMessages.delete(filteredMessages.at(0).id);
         console.log(filteredMessages.at(0));
         filteredMessages.forEach((msg) => {
-            if(message.content.startsWith('!')) return;
+            if(msg.content.startsWith('!')) return;
             //if(msg.author.id !== client.user.id && message.author.bot) return;
             //message sent by other user that is not a bot
             if(msg.author.id !== message.author.id && !msg.author.bot) return;
@@ -91,6 +92,7 @@ clientDev.on('messageCreate', async (message) => {
     try{
         if(message.author.bot) return;
         if(message.content.startsWith('!')) return;//normal message
+        if(!(message.channel.name.startsWith('bot') || !isPublicChannel(message.channel))) return;//only reply in bot chat or private chat
         if(message.content.startsWith('%end')){
             console.log("End Conversation");
             message.reply("=== End Current Conversation ===");
@@ -100,7 +102,8 @@ clientDev.on('messageCreate', async (message) => {
         //record conversations
         let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."}];
 
-        console.log("check message channel");
+        console.log(`message channel: ${message.channel.name}, channel type: ${message.channel.type}`);
+
         const msgChannel = message.channel;
         let finalChannel = null;
         if(!msgChannel.isThread()){
@@ -166,5 +169,11 @@ clientDev.on('messageCreate', async (message) => {
         console.log(err)
     }
 });
+
+function isPublicChannel(channel){
+    const guild = channel.guild;
+    const everyone = guild.roles.everyone;
+    return channel.permissionsFor(everyone).has(PermissionsBitField.Flags.ViewChannel);
+}
 
 clientDev.login(process.env.DISCORD_TOKEN_DEV);
