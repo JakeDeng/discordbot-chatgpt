@@ -56,7 +56,7 @@ client.on('messageCreate', async (message) => {
                 content: msg.content,
             })
         });
-        console.log(conversationLog);
+        //console.log(conversationLog);
         
         const result = await openai.createChatCompletion({
             model:'gpt-3.5-turbo',
@@ -100,7 +100,7 @@ clientDev.on('messageCreate', async (message) => {
         }
 
         //record conversations
-        let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."}];
+        let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond all questions using markdown."}];
 
         console.log(`message channel: ${message.channel.name}, channel type: ${message.channel.type}`);
 
@@ -155,7 +155,7 @@ clientDev.on('messageCreate', async (message) => {
                 content: msg.content,
             })
         });
-        console.log(conversationLog);
+        //console.log(conversationLog);
         
         const result = await openai.createChatCompletion({
             model:'gpt-3.5-turbo',
