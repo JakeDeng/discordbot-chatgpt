@@ -32,7 +32,7 @@ client.on('messageCreate', async (message) => {
         }
         console.log("Start Conversation");
         //record conversations
-        let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."}];
+        let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown language."}];
 
         await message.channel.sendTyping();
         //fetch last 30 messages from the same channel
@@ -156,13 +156,19 @@ clientDev.on('messageCreate', async (message) => {
             })
         });
         //console.log(conversationLog);
+        let returnMessage;
+        try{
+            const result = await openai.createChatCompletion({
+                model:'gpt-3.5-turbo',
+                messages: conversationLog
+            });
+            returnMessage = result.data.choices[0].message;
+        }catch(err){
+            console.log("chat error: "+err.message);
+            returnMessage = `openai API error with ${err.message}. \nPlease input '%end' to start a new conversaion`;
+        }
         
-        const result = await openai.createChatCompletion({
-            model:'gpt-3.5-turbo',
-            messages: conversationLog
-        })
-        
-        finalChannel.send(result.data.choices[0].message);
+        finalChannel.send(returnMessage);
         console.log("message Sent");
         return;
     } catch(err){
