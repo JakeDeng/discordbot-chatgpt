@@ -7,9 +7,9 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-//setup discord bot
+//setup bot
 const client = new Client({
-    intents: [
+        intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent
@@ -21,74 +21,6 @@ client.on('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
-    try{
-        if(message.author.bot) return;
-        if(message.content.startsWith('!')) return;//normal message
-        if(!(message.channel.name.startsWith('bot') || !isPublicChannel(message.channel))) return;//only reply in bot chat or private chat
-        if(message.content.startsWith('%end')){
-            console.log("End Conversation");
-            message.reply("=== End Current Conversation ===");
-            return;
-        }
-        console.log("Start Conversation");
-        //record conversations
-        let conversationLog = [{role: 'system', content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown language."}];
-
-        await message.channel.sendTyping();
-        //fetch last 30 messages from the same channel
-        let prevMessages = await message.channel.messages.fetch({limit: 30});
-        let endKey = prevMessages.findKey((msg) => {
-            return msg.content.startsWith('%end');
-        });
-        const filteredMessages = prevMessages.filter((msg, key) => {
-            return key > endKey;
-        })
-        filteredMessages.reverse();
-        filteredMessages.delete(filteredMessages.at(0).id);
-        console.log(filteredMessages.at(0));
-        filteredMessages.forEach((msg) => {
-            if(msg.content.startsWith('!')) return;
-            //if(msg.author.id !== client.user.id && message.author.bot) return;
-            //message sent by other user that is not a bot
-            if(msg.author.id !== message.author.id && !msg.author.bot) return;
-            conversationLog.push({
-                role: (msg.author.bot)? 'assistant':'user',
-                content: msg.content,
-            })
-        });
-        //console.log(conversationLog);
-        
-        const result = await openai.createChatCompletion({
-            model:'gpt-3.5-turbo',
-            messages: conversationLog,
-            temperature: 0.6
-        })
-        
-        message.reply(result.data.choices[0].message);
-        console.log("Reply Sent");
-        return;
-    } catch(err){
-        console.log(err)
-    }
-});
-
-client.login(process.env.DISCORD_TOKEN);
-
-//============================================================
-//setup dev bot
-const clientDev = new Client({
-        intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ]
-});
-
-clientDev.on('ready', () => {
-  console.log(`Bot Logged in as ${clientDev.user.tag}!`);
-});
-
-clientDev.on('messageCreate', async (message) => {
     try{
         if(message.author.bot) return;
         if(message.content.startsWith('!')) return;//normal message
@@ -157,18 +89,36 @@ clientDev.on('messageCreate', async (message) => {
         });
         //console.log(conversationLog);
         let returnMessage;
+        let returnContent;
         try{
             const result = await openai.createChatCompletion({
                 model:'gpt-3.5-turbo',
                 messages: conversationLog
             });
             returnMessage = result.data.choices[0].message;
+            returnContent = returnMessage.content;
         }catch(err){
             console.log("chat error: "+err.message);
             returnMessage = `openai API error with ${err.message}. \nPlease input '%end' to start a new conversaion`;
         }
+
+        if(returnContent.length > 2000){
+            console.log(`response message length ${returnContent.length} excedds 2000 chrarcters limit`);
+            const pageSize = 1980;
+            
+            let partialResponse = null;
+            let pageNumber = Math.ceil(returnContent.length / pageSize );
+
+            for(let currentPage = 0; currentPage < pageNumber; currentPage++){
+                let partialResponse = returnContent.slice(currentPage * pageSize, (currentPage+1)*pageSize);
+                partialResponse = `[${currentPage+1}/${pageNumber}] ` + partialResponse;
+                await finalChannel.send(partialResponse);
+                console.log(`Page ${currentPage+1} sent`);
+            }
+        }else{
+            await finalChannel.send(returnContent);
+        }
         
-        finalChannel.send(returnMessage);
         console.log("message Sent");
         return;
     } catch(err){
@@ -182,4 +132,4 @@ function isPublicChannel(channel){
     return channel.permissionsFor(everyone).has(PermissionsBitField.Flags.ViewChannel);
 }
 
-clientDev.login(process.env.DISCORD_TOKEN_DEV);
+client.login(process.env.DISCORD_TOKEN_DEV);
