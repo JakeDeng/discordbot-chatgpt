@@ -1,5 +1,6 @@
-const {Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { PermissionsBitField } = require('discord.js');
 const { Configuration, OpenAIApi} = require('openai');
+
 //setup openai
 const configuration = new Configuration({
     organization: process.env.OPENAI_ORG,
@@ -7,21 +8,11 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-//setup bot
-const client = new Client({
-        intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ]
-});
-
-client.on('ready', () => {
-  console.log(`Bot Logged in as ${client.user.tag}!`);
-});
-
-client.on('messageCreate', async (message) => {
-    try{
+module.exports = {
+    name: 'messageCreate',//event name must match discord event name
+    once: false, 
+    async execute(message, client) {
+        try{
         if(message.author.bot) return;
         if(message.content.startsWith('!')) return;//normal message
         if(!(message.channel.name.startsWith('bot') || !isPublicChannel(message.channel))) return;//only reply in bot chat or private chat
@@ -124,12 +115,11 @@ client.on('messageCreate', async (message) => {
     } catch(err){
         console.log(err)
     }
-});
+    }
+}
 
 function isPublicChannel(channel){
     const guild = channel.guild;
     const everyone = guild.roles.everyone;
     return channel.permissionsFor(everyone).has(PermissionsBitField.Flags.ViewChannel);
 }
-
-client.login(process.env.DISCORD_TOKEN_DEV);
